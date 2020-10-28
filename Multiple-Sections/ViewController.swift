@@ -27,9 +27,22 @@ class ViewController: UIViewController {
     // 2)
     @IBOutlet weak var collectionView: UICollectionView! // default layout is flow
     
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        configureCollectionView()
+        configureDataSource()
+    }
+    
     typealias DataSource = UICollectionViewDiffableDataSource<Section, Int> // both has to conform to hashable
     
     private var dataSource: DataSource!
+    
+    // 4)
+    private func configureCollectionView() {
+        // overrride flow to compositional
+        collectionView.collectionViewLayout = createLayout() // reassign
+        collectionView.backgroundColor = .systemRed
+    }
     
     // 3)
     private func createLayout() -> UICollectionViewLayout {
@@ -61,13 +74,30 @@ class ViewController: UIViewController {
         return layout
     }
     
-    
-    
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
+    // 5) setting up data source
+    private func configureDataSource () {
+        dataSource = DataSource(collectionView: collectionView, cellProvider: { (collectionView, indexPath, item) -> UICollectionViewCell? in
+            // configure the cell
+            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "labelCell", for: indexPath) as? LabelCell else {
+                fatalError()
+            }
+            cell.textlabel.text  = "\(item)"
+            
+            if indexPath.section == 0 {
+                cell.backgroundColor = .systemBlue
+            } else {
+                cell.backgroundColor = .systemGray
+            }
+            
+            return cell
+        })
+        
+        var snapshot = NSDiffableDataSourceSnapshot<Section, Int>()
+        snapshot.appendSections([.grid, .single])
+        snapshot.appendItems(Array(1...12), toSection: .grid)
+        snapshot.appendItems(Array(13...20), toSection: .single)
+        dataSource.apply(snapshot, animatingDifferences: false)
     }
-    
-    
+
 }
 
