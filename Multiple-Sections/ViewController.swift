@@ -41,7 +41,10 @@ class ViewController: UIViewController {
     private func configureCollectionView() {
         // overrride flow to compositional
         collectionView.collectionViewLayout = createLayout() // reassign
-        collectionView.backgroundColor = .systemRed
+        collectionView.backgroundColor = .systemBackground
+        
+        // 7) register the supplementary view
+        collectionView.register(HeaderView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: "headerView")
     }
     
     // 3)
@@ -60,12 +63,18 @@ class ViewController: UIViewController {
             // create layout
             let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
             let item = NSCollectionLayoutItem(layoutSize: itemSize)
+            item.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
             
             let groupHeight = coloumn == 1 ? NSCollectionLayoutDimension.absolute(200) : NSCollectionLayoutDimension.fractionalWidth(0.25)
             let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: groupHeight)
             let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitem: item, count: coloumn) // 1 or 4
             
             let section = NSCollectionLayoutSection(group: group)
+            
+            // 9) configure the header view
+            let headerSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .estimated(44)) // .estimate = changes based on content
+            let header = NSCollectionLayoutBoundarySupplementaryItem(layoutSize: headerSize, elementKind: UICollectionView.elementKindSectionHeader, alignment: .top)
+            section.boundarySupplementaryItems = [header]
             
             return section
             
@@ -85,6 +94,7 @@ class ViewController: UIViewController {
             
             if indexPath.section == 0 {
                 cell.backgroundColor = .systemBlue
+                cell.layer.cornerRadius = 12
             } else {
                 cell.backgroundColor = .systemGray
             }
@@ -97,6 +107,17 @@ class ViewController: UIViewController {
         snapshot.appendItems(Array(1...12), toSection: .grid)
         snapshot.appendItems(Array(13...20), toSection: .single)
         dataSource.apply(snapshot, animatingDifferences: false)
+        
+        // 8)
+        dataSource.supplementaryViewProvider = { (collectionView, kind, indexPath) in
+            guard let headerView = self.collectionView.dequeueReusableSupplementaryView(ofKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: "headerView", for: indexPath) as? HeaderView else {
+                fatalError()
+            }
+            headerView.textLabel.text = "\(Section.allCases[indexPath.section])".capitalized
+            headerView.backgroundColor = .systemGreen
+            headerView.layer.cornerRadius = 12 
+            return headerView
+        }
     }
 
 }
